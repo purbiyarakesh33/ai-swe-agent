@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 .workflow_repos/
 task-manager-swe-benchmark/
+records/
 workflow_checkpoints.sqlite*
 workflow_history.sqlite*
 .env
