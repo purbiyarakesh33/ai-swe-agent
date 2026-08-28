@@ -1,1 +1,7 @@
 streamlit>=1.40,<2
+langgraph>=0.2
+langgraph-checkpoint-sqlite>=2.0
+langchain-core>=0.3
+langchain-ollama>=0.2
+numpy>=1.26
+docker>=7
