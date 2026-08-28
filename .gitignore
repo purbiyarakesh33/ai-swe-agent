@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.workflow_repos/
+task-manager-swe-benchmark/
+workflow_checkpoints.sqlite*
+workflow_history.sqlite*
+.env
+.env.*
+!.env.example
+*.log
