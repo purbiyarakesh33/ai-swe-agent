@@ -9,6 +9,14 @@ from .llm import get_llm
 
 
 MAX_TURNS_FAILURE = "Max turns reached without a final answer."
+RECOVERABLE_TOOL_NAMES = {
+    "rag_tool",
+    "read_file",
+    "list_files",
+    "run_tests",
+    "write_and_run_repro",
+    "apply_patch",
+}
 
 
 def run_agent_loop(system_prompt: str, user_prompt: str, tools: list, max_turns: int = 8,
@@ -190,6 +198,27 @@ def _extract_json(text: str):
     structured_plan = _extract_loose_structured_plan(text)
     if structured_plan is not None:
         return {"final_answer": structured_plan}
+
+    # Some local models prepend reasoning and then emit a tool name directly
+    # before its JSON arguments (for example, ``rag_tool{"query": "..."}``)
+    # instead of wrapping both in {"tool": ..., "args": ...}. Recover only
+    # known, read/execute tool names; never reinterpret arbitrary prose as a
+    # tool call.
+    for tool_name in RECOVERABLE_TOOL_NAMES:
+        marker = text.find(tool_name)
+        while marker != -1:
+            args_start = text.find("{", marker + len(tool_name))
+            if args_start == -1:
+                break
+            args_end = _find_matching_brace(text, args_start)
+            if args_end is not None:
+                try:
+                    args = json.loads(text[args_start:args_end + 1])
+                    if isinstance(args, dict):
+                        return {"tool": tool_name, "args": args}
+                except json.JSONDecodeError:
+                    pass
+            marker = text.find(tool_name, marker + len(tool_name))
 
     match = re.search(r'"final_answer"\s*:\s*"(.*)"\s*\}', text, re.DOTALL)
     if match:
